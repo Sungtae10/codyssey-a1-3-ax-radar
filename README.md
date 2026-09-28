@@ -137,7 +137,7 @@ codyssey-a1-3-ax-radar/
 ├── scripts/
 │   ├── dev_server.py       # 로컬 개발 서버 (목업·오류 재현 모드)
 │   └── check_ui.py         # 브라우저 화면 자동 점검 + 스크린샷
-├── tests/test_api.py       # API 단위 테스트 50개
+├── tests/test_api.py       # API 단위 테스트 59개
 └── docs/                   # 기획서, 테스트 리포트, 트러블슈팅, AI 사용 기록, 학습 노트, 배포 가이드
 ```
 
@@ -180,11 +180,13 @@ python3 scripts/dev_server.py
 | `LLM_PROVIDER` | 선택 | `gemini` · `anthropic` · `openai`. 비우면 키가 있는 것 중 gemini > anthropic > openai 순 |
 | `GEMINI_MODEL` 등 | 선택 | 모델 이름 변경 (기본값은 위 기술 스택 표) |
 | `AI_TIMEOUT_SECONDS` | 선택 | AI 응답 대기 시간, 기본 40 (5~55) |
+| `RATE_LIMIT_PER_MINUTE` | 선택 | 같은 IP 가 1분에 요청할 수 있는 진단 횟수, 기본 6 (0 이면 끔) |
+| `OPENAI_REASONING_EFFORT` | 선택 | OpenAI GPT-5 계열 추론 강도 `none`·`minimal`·`low`·`medium`·`high`, 기본 `low` |
 | `NOTIFY_WEBHOOK_URL` | 선택 | 보너스: 진단 요약을 받을 Discord / Make 웹훅 |
 
 - **로컬**: `.env` 파일에 `이름=값` 형식으로 적습니다. `.env` 는 `.gitignore` 에 있어 GitHub 에 올라가지 않습니다.
 - **Vercel**: 프로젝트 → Settings → Environment Variables 에 같은 이름으로 추가합니다. **값을 바꾼 뒤에는 Redeploy 해야 적용됩니다.**
-- 설정 확인: `https://배포주소/api/health` 의 `"key_configured": true` (키 값은 표시하지 않음)
+- 설정 확인: `https://배포주소/api/health` 의 `"config_ok": true` (키 값은 표시하지 않고, 설정이 틀리면 `config_error` 에 이유 표시)
 
 ---
 
@@ -241,9 +243,10 @@ python3 scripts/dev_server.py
 
 | HTTP | 코드 | 상황 | 화면 안내 |
 |---|---|---|---|
-| 400 | `EMPTY_INPUT` · `INVALID_INPUT` · `TOO_LONG` · `BAD_JSON` | 필수값 누락, 형식·길이 오류 | "필수값을 입력하세요" + 해당 칸 표시 |
+| 400 | `EMPTY_INPUT` · `INVALID_INPUT` · `TOO_LONG` · `BAD_JSON` · `BAD_REQUEST` | 필수값 누락, 형식·길이 오류, 요청 크기 정보 오류 | "필수값을 입력하세요" + 해당 칸 표시 |
 | 405 | `METHOD_NOT_ALLOWED` | POST 가 아닌 요청 | 요청 방식 오류 |
 | 413 | `TOO_LARGE` | 요청 본문 10KB 초과 | 입력이 너무 커요 |
+| 429 | `TOO_MANY_REQUESTS` | 같은 IP 가 1분에 6번 넘게 요청 (서버 호출 빈도 제한) | 잠시 후 다시 시도 |
 | 429 | `RATE_LIMITED` | AI API 요청 과다·쿼터 초과 | 1분 뒤 다시 시도 |
 | 500 | `CONFIG_MISSING_KEY` · `CONFIG_INVALID` | 서버에 키가 없거나 설정 오류 | 서버 설정이 필요해요 (운영자 확인) |
 | 500 | `SERVER_ERROR` | 예상하지 못한 오류 | 잠시 후 다시 시도 |
@@ -256,7 +259,7 @@ python3 scripts/dev_server.py
 ### `GET /api/health`
 
 ```json
-{ "ok": true, "service": "ax-radar", "provider": "gemini", "model": "gemini-3.5-flash-lite", "key_configured": true, "notify_webhook": false, "runtime": "python 3.12.x", "time": "…" }
+{ "ok": true, "service": "ax-radar", "provider": "gemini", "model": "gemini-3.5-flash-lite", "key_configured": true, "config_ok": true, "config_error": null, "notify_webhook": false, "runtime": "python 3.12.x", "time": "…" }
 ```
 
 ---
@@ -266,7 +269,9 @@ python3 scripts/dev_server.py
 - API 키는 **코드·README·스크린샷에 넣지 않고** 환경 변수로만 관리합니다. (`.env` 커밋 차단, 저장소 전체 키 형식 검사 테스트 포함)
 - 키는 URL 이 아니라 요청 헤더로 보내고, 서버 로그에서는 키를 `***` 로 가립니다. 로그에 사용자 문장을 남기지 않습니다.
 - AI 응답은 `textContent` 로만 화면에 넣어 HTML·스크립트가 실행되지 않습니다.
-- 사용자가 적은 고민 문장은 프롬프트 안에서 "지시가 아닌 자료"로 구분해 프롬프트 주입을 줄입니다.
+- 같은 IP 는 1분에 6번까지만 AI 를 부를 수 있습니다. (브라우저의 3초 제한은 우회될 수 있어 서버에서도 제한, IP 는 1분 동안 메모리에만 보관)
+- `.env` 는 `.gitignore` 와 `.vercelignore` 모두에 있어 GitHub 에도, Vercel CLI 배포에도 올라가지 않습니다.
+- 사용자가 적은 고민 문장은 프롬프트 안에서 "지시가 아닌 자료"로 구분해 프롬프트 주입을 줄입니다. (따옴표를 여러 개 넣어 구분 기호를 흉내 내는 우회도 차단)
 - 응답 헤더: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` (`vercel.json`)
 - **키 유출이 의심되면**: ① 발급처에서 즉시 폐기 ② 새 키로 Vercel 환경 변수 교체 후 Redeploy ③ 커밋 이력에 들어갔다면 `git filter-repo --replace-text` 로 정리 후 강제 push (절차: [docs/03_troubleshooting.md](docs/03_troubleshooting.md))
 
@@ -275,15 +280,15 @@ python3 scripts/dev_server.py
 ## 10. 테스트
 
 ```bash
-python -m unittest discover -s tests -v   # API 단위 테스트 50개 (키·인터넷 불필요)
+python -m unittest discover -s tests -v   # API 단위 테스트 59개 (키·인터넷 불필요)
 python scripts/check_ui.py                 # 브라우저 화면 점검 46개 (playwright 설치 필요)
 ```
 
 | 종류 | 결과 | 내용 |
 |---|---|---|
-| 단위 테스트 | 50 / 50 통과 | 입력 검증, 단계 경계값, 제공자별 요청 형식, 오류 코드 변환, 응답 정리, 웹훅, HTTP 응답, 키 노출 검사 |
+| 단위 테스트 | 59 / 59 통과 | 입력 검증, 단계 경계값, 제공자별 요청 형식, 오류 코드 변환, 응답 정리, 프롬프트 구분 기호 우회 차단, 서버 호출 빈도 제한, health 설정 판단, 웹훅, HTTP 응답, 키 노출 검사 |
 | 화면 점검 | 46 / 46 통과 | 1440 / 768 / 390px, 메뉴, 빈 입력, 결과, 오류 코드 6종, 네트워크 끊김, 지연·타임아웃, 다크 모드, XSS |
-| 테스트로 고친 결함 | 3건 | 로그 키 노출 가능성, hidden 무시, 첫 클릭 무시 |
+| 테스트·검토로 고친 결함 | 3건 + 검토 6건 | 로그 키 노출 가능성, hidden 무시, 첫 클릭 무시 / 독립 검토: 구분 기호 우회, health 오판, CLI 배포 시 .env 업로드 위험 등 |
 
 상세: [docs/02_test-report.md](docs/02_test-report.md)
 

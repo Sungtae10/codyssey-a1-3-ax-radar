@@ -49,7 +49,7 @@ python scripts/dev_server.py                  # 로컬 서버 실행
 | 키 없이 화면만 보기 | `python scripts/dev_server.py --mock` |
 | 오류 안내 화면 보기 | `python scripts/dev_server.py --mock-error 429` (또는 500, 502, 504, bad-json, no-key) |
 | 지연 안내 보기 | `python scripts/dev_server.py --mock --mock-delay 12` |
-| 단위 테스트 50개 | `python -m unittest discover -s tests -v` → 마지막 줄 `OK` |
+| 단위 테스트 59개 | `python -m unittest discover -s tests -v` → 마지막 줄 `OK` |
 
 ---
 
@@ -95,7 +95,7 @@ git push -u origin main
 
 | 순서 | 할 일 | 정상 모습 |
 |---|---|---|
-| 1 | `https://배포주소/api/health` 열기 | `"key_configured": true`, `"provider": "gemini"` |
+| 1 | `https://배포주소/api/health` 열기 | `"config_ok": true`, `"provider": "gemini"` (false 면 `config_error` 에 이유) |
 | 2 | 배포 주소 → 메뉴 5개 눌러 보기 | 섹션 이동, 메뉴 강조 |
 | 3 | 빈 상태로 **AI 진단 받기** | "필수값을 입력하세요" |
 | 4 | **예시로 채우기** → 제출 | 5~20초 뒤 결과, 하단에 `분석 엔진: gemini` |

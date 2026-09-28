@@ -58,14 +58,30 @@ AI 코딩 도구가 만든 코드라도 **왜 틀렸는지 말로 설명하고 �
 
 ---
 
+## A-2. 독립 검토로 찾아 고친 문제
+
+코드를 만든 과정을 모르는 **별도 AI 검토 에이전트**에게 과제 문서와 저장소만 주고 감사를 맡겼습니다. (스스로 만든 결과를 스스로 채점하지 않기 위해)
+
+| 번호 | 발견 내용 | 원인 (말로 설명) | 수정 |
+|---|---|---|---|
+| R1 | 고민 칸에 따옴표 5개(`"""""`)를 넣으면 프롬프트의 구분 기호가 되살아남 | `replace('"""', '"')` 는 한 번 훑기만 해서 5개 중 3개만 1개로 바뀌고 `"""` 가 남음 | `re.sub(r'"{3,}', '"', …)` 로 3개 이상을 모두 1개로. 회사명도 줄바꿈을 한 칸으로 바꿔 한 줄로 고정. 새 테스트가 수정 전 코드에서 실패하는 것 확인 |
+| R2 | `/api/health` 가 "정상"인데 진단은 설정 오류(500)가 날 수 있음 | health 는 키 유무만 보고, `LLM_PROVIDER`·모델 이름 검사는 하지 않았음 | 진단 함수와 같은 규칙으로 검사해 `config_ok`·`config_error` 를 돌려줌. 설정 조합 8가지에서 두 함수 판단이 같은지 테스트 |
+| R3 | 서버 쪽 호출 빈도 제한이 없음 | 3초 제한은 브라우저에만 있어 직접 요청으로 우회 가능 | 같은 IP 1분 6회 제한 (`RATE_LIMIT_PER_MINUTE`, 429 `TOO_MANY_REQUESTS`). 인스턴스별 메모리 기준이라 완벽한 전역 제한은 아님 |
+| R4 | Vercel CLI 로 로컬 폴더를 배포하면 `.env` 가 올라갈 수 있음 | `.vercelignore` 가 있으면 CLI 는 그 목록만 보는데 `.env` 가 빠져 있었음 | `.vercelignore` 에 `.env`, `.env.*` 추가 + 테스트로 확인 |
+| R5 | 결과 표시 중 오류가 나도 "인터넷 연결 확인"으로 안내 | 결과 그리기 오류와 fetch 실패를 같은 catch 에서 처리 | 결과 그리기 오류는 `RENDER_ERROR` 로 따로 안내, 빈 입력으로 멈출 때 이전 오류 카드 닫기 |
+| R6 | 문서 수치 불일치 (예시 고민 120자 → 실제 115자, KPI 최대 4개 저장, 일부 오류 코드·환경 변수 누락) | 코드를 고친 뒤 문서를 같이 고치지 않음 | KPI 3개로 통일, README·기획서·리포트 수정, 항상 통과하던 테스트 단언 1개 교체 |
+
+---
+
 ## B. 배포 후 생길 수 있는 문제와 해결 방법
 
 | 화면·증상 | 가장 흔한 원인 | 확인 방법 | 해결 |
 |---|---|---|---|
-| "서버 설정이 필요해요" `CONFIG_MISSING_KEY · HTTP 500` | Vercel 에 키를 안 넣었거나, 넣은 뒤 **재배포를 안 함** | `/api/health` 의 `key_configured` 가 `false` | Settings > Environment Variables 에 `GEMINI_API_KEY` 추가 → Deployments > 최신 배포 ⋯ > **Redeploy** (환경 변수는 새 배포부터 적용) |
+| "서버 설정이 필요해요" `CONFIG_MISSING_KEY · HTTP 500` | Vercel 에 키를 안 넣었거나, 넣은 뒤 **재배포를 안 함** | `/api/health` 의 `config_ok` 가 `false`, `config_error` 에 이유 | Settings > Environment Variables 에 `GEMINI_API_KEY` 추가 → Deployments > 최신 배포 ⋯ > **Redeploy** (환경 변수는 새 배포부터 적용) |
 | "AI 서비스 인증 오류" `AI_AUTH_ERROR` | 키 오타, 앞뒤 공백, 폐기된 키 | Vercel Logs 에서 `ai_http_error status=400/401/403` | AI Studio 에서 새 키 발급 → 환경 변수 교체 → Redeploy |
 | "AI 모델 설정 오류" `AI_MODEL_NOT_FOUND` | `GEMINI_MODEL` 오타 또는 종료된 모델 | Logs 에서 `status=404` | `GEMINI_MODEL` 을 지우거나 공식 모델 목록의 이름으로 수정 |
 | "요청이 많아요" `RATE_LIMITED · HTTP 429` | 무료 등급 한도 초과 (하루 한도는 태평양 시간 자정에 초기화) | AI Studio > Rate limit 화면 | 잠시 뒤 재시도, 동료 테스트 시간 분산 |
+| "요청이 너무 잦아요" `TOO_MANY_REQUESTS · HTTP 429` | 같은 IP 에서 1분에 6번 넘게 요청 (우리 서버의 제한) | 오류 코드로 구분 | 1분 뒤 재시도, 시연·동료 평가가 겹치면 `RATE_LIMIT_PER_MINUTE` 를 잠시 올리고 Redeploy |
 | "API를 찾을 수 없어요" `HTTP 404` | `api/` 폴더가 배포에 없음, Root Directory 설정 오류 | 배포 상세 화면의 함수 목록(Resources 또는 Functions)에 `api/diagnose.py` 가 있는지 | Framework Preset **Other**, Root Directory **./** 로 다시 배포 |
 | "서버 오류" `HTTP 500` (JSON 아님) | 함수가 시작하다 실패 (예: `requirements.txt` 누락으로 `ModuleNotFoundError: requests`) | Logs 의 Traceback | 루트에 `requirements.txt` 가 있는지 확인 후 push |
 | "응답 시간 초과" `HTTP 504` | AI 응답이 함수 제한 시간 초과 | Logs 의 `ai_timeout` | `vercel.json` maxDuration(60) 확인, 더 빠른 모델 사용 |
