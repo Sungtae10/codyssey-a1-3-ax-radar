@@ -118,6 +118,7 @@ def run() -> int:
 
         page.click("nav a[href='#diagnose']")
         page.wait_for_timeout(900)
+        page.screenshot(path=str(SHOTS / "14_desktop_diagnose.png"))
         page.click("#submit-btn")                                   # 빈 입력 제출
         page.wait_for_timeout(500)
         alert = page.inner_text("#form-alert")
@@ -249,7 +250,7 @@ def run() -> int:
         page.goto(ok_url + "/", wait_until="networkidle")
         check("태블릿 768px: 가로 스크롤 없음", no_horizontal_scroll(page))
         page.goto(ok_url + "/#diagnose", wait_until="networkidle")
-        page.wait_for_timeout(600)
+        page.wait_for_timeout(1500)                                 # 주소의 #diagnose 로 스크롤이 끝난 뒤 촬영
         page.screenshot(path=str(SHOTS / "12_tablet_diagnose.png"))
         context.close()
 
