@@ -753,7 +753,9 @@ textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 
   .section { padding: 52px 0; }
   .hero { padding-top: 40px; }
   .cta-row .btn { flex: 1 1 100%; }
-  .steps { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .steps li { flex-direction: column; gap: 6px; padding: 10px; font-size: 0.8rem; }
+  .steps strong { font-size: 0.9rem; }
   .dimension-grid { grid-template-columns: 1fr; }
   .level-list { grid-template-columns: 1fr; }
   .level-list li { flex-direction: row; align-items: flex-start; }
