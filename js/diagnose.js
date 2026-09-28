@@ -495,9 +495,10 @@
     els.industry.focus({ preventScroll: true });
   });
 
-  // 입력을 고치면 그 칸의 오류 표시를 바로 지운다
-  form.addEventListener('change', function (event) {
-    var target = event.target;
+  // 입력을 고치면 그 칸의 오류 표시를 바로 지우고, 남은 오류가 없으면 위쪽 안내도 닫는다.
+  // 글자 칸은 blur 때 발생하는 change 가 아니라 input(타이핑 중)에서 지운다.
+  // (change 에서 지우면 제출 버튼을 누르는 순간 오류 문구가 사라지며 버튼이 위로 밀려 첫 클릭이 무시됨)
+  function clearFieldError(target) {
     var box = target.closest('.score-group, .field');
     if (box && box.classList.contains('has-error')) {
       box.classList.remove('has-error');
@@ -505,6 +506,16 @@
       if (error) error.textContent = '';
       target.removeAttribute('aria-invalid');
     }
+    if (!form.querySelector('.has-error')) {
+      els.formAlert.hidden = true;
+      els.formAlert.textContent = '';
+    }
+  }
+  form.addEventListener('input', function (event) {
+    if (event.target.matches('input[type="text"], textarea')) clearFieldError(event.target);
+  });
+  form.addEventListener('change', function (event) {
+    if (event.target.matches('select, input[type="radio"]')) clearFieldError(event.target);
   });
 
   updateCounter();
