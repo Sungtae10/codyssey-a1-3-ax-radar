@@ -12,6 +12,7 @@
   2) 입력값 검증                  validate_payload
   3) 점수 합계로 단계 계산         compute_level   (AI가 아니라 코드가 계산)
   4) AI 제공자와 키 고르기         pick_provider   (키는 환경 변수에서만 읽음)
+  4-1) 같은 IP 호출 빈도 제한       check_rate_limit (1분에 6번, AI 비용·쿼터 보호)
   5) AI 호출                      call_ai         (Gemini / Claude / OpenAI)
   6) AI 응답에서 JSON 꺼내 정리     extract_json, normalize_result
   7) (선택) 운영 알림 웹훅 전송     notify_webhook
@@ -24,8 +25,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 import traceback
+from collections import deque
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler
 
@@ -38,6 +41,8 @@ MAX_BODY_BYTES = 10_000          # 요청 본문 최대 크기 (정상 입력은
 COMPANY_MAX = 40                 # 회사/조직명 최대 글자 수
 GOAL_MIN, GOAL_MAX = 10, 500     # 고민·목표 글자 수 범위
 DEFAULT_TIMEOUT = 40             # AI 응답 대기 시간(초). vercel.json maxDuration(60)보다 작게
+RATE_LIMIT_DEFAULT = 6           # 같은 IP 가 1분에 부를 수 있는 AI 진단 횟수 (환경 변수 RATE_LIMIT_PER_MINUTE, 0 이면 끔)
+KPI_MAX = 3                      # 화면·프롬프트와 같은 개수
 
 INDUSTRIES = {
     "semiconductor": "반도체·디스플레이",
@@ -203,7 +208,7 @@ def validate_payload(data) -> dict:
     if not isinstance(data, dict):
         raise InputError("BAD_JSON", "요청 형식(JSON)이 올바르지 않아요.")
 
-    company = clean_text(data.get("company"))[:COMPANY_MAX]
+    company = re.sub(r"\s+", " ", clean_text(data.get("company")))[:COMPANY_MAX]
 
     industry = clean_text(data.get("industry"))
     if not industry:
@@ -346,10 +351,11 @@ def build_user_prompt(clean: dict, level: dict) -> str:
         strongest = ", ".join(f"{DIMENSIONS[key]}({scores[key]}점)" for key in level["strongest"])
     else:
         weakest = strongest = f"없음 (5개 영역 모두 {scores['strategy']}점으로 같음)"
-    goal = clean["goal"].replace('"""', '"')  # 구분 기호가 깨지지 않게
+    goal = re.sub(r'"{3,}', '"', clean["goal"])          # 구분 기호(""")를 사용자가 흉내 내지 못하게
+    company = re.sub(r'"{3,}', '"', clean["company"])
     lines = [
         "[회사 정보]",
-        f"- 회사/조직명: {clean['company'] or '(입력 안 함)'}",
+        f"- 회사/조직명: {company or '(입력 안 함)'}",
         f"- 업종: {INDUSTRIES[clean['industry']]}",
         f"- 규모: {SIZES[clean['size']]}",
         "",
@@ -493,8 +499,9 @@ def call_openai(system: str, user: str, key: str, model: str, timeout: int) -> s
         "response_format": {"type": "json_object"},
     }
     if re.match(r"^(gpt-5|o\d)", model):
-        # GPT-5 계열은 추론 모델이라, 추론 강도를 낮춰 응답 시간을 줄인다.
-        body["reasoning_effort"] = (os.environ.get("OPENAI_REASONING_EFFORT") or "low").strip()
+        # GPT-5 계열은 추론 모델이라, 추론 강도를 낮춰 응답 시간을 줄인다. (잘못된 값이면 low)
+        effort = (os.environ.get("OPENAI_REASONING_EFFORT") or "low").strip().lower()
+        body["reasoning_effort"] = effort if effort in ("none", "minimal", "low", "medium", "high") else "low"
     data = _post_json(url, headers, body, timeout, "openai", key)
     choices = data.get("choices") or []
     if not choices:
@@ -570,7 +577,7 @@ def normalize_result(raw: dict) -> dict:
         if not (name and target):
             continue
         kpis.append({"name": name, "target": target, "why": _short(item.get("why"), 160)})
-        if len(kpis) == 4:
+        if len(kpis) == KPI_MAX:
             break
 
     result = {
@@ -585,6 +592,42 @@ def normalize_result(raw: dict) -> dict:
     if not (result["summary"] and result["roadmap"] and result["kpis"]):
         raise AiError("AI_BAD_OUTPUT", "AI 응답에 필요한 항목이 빠져 있어요. 다시 시도해 주세요.")
     return result
+
+
+# ---------------------------------------------------------------------------
+# 9-1. 호출 빈도 제한 (같은 IP 가 1분에 N번까지)
+#   - 브라우저의 3초 제한은 개발자 도구나 직접 요청으로 우회할 수 있어 서버에서도 막는다.
+#   - 서버리스 인스턴스마다 메모리가 따로라 완벽한 전역 제한은 아니다.
+#     (실제 운영 규모라면 Vercel KV 같은 공유 저장소가 필요)
+#   - IP 는 1분 동안 메모리에만 두고 로그·파일에 남기지 않는다.
+# ---------------------------------------------------------------------------
+_RECENT_CALLS: dict = {}
+_RATE_LOCK = threading.Lock()
+
+
+def client_ip(handler: BaseHTTPRequestHandler) -> str:
+    forwarded = (handler.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    return forwarded or (handler.headers.get("x-real-ip") or "").strip() or handler.client_address[0]
+
+
+def check_rate_limit(ip: str, env=None, now: float | None = None) -> None:
+    env = os.environ if env is None else env
+    try:
+        limit = int(str(env.get("RATE_LIMIT_PER_MINUTE") or RATE_LIMIT_DEFAULT).strip())
+    except ValueError:
+        limit = RATE_LIMIT_DEFAULT
+    if limit <= 0 or not ip:
+        return
+    now = time.monotonic() if now is None else now
+    with _RATE_LOCK:
+        if len(_RECENT_CALLS) > 5000:            # 메모리 보호
+            _RECENT_CALLS.clear()
+        calls = _RECENT_CALLS.setdefault(ip, deque())
+        while calls and now - calls[0] >= 60:
+            calls.popleft()
+        if len(calls) >= limit:
+            raise ApiError("TOO_MANY_REQUESTS", f"요청이 너무 잦아요. 1분에 {limit}번까지 진단할 수 있어요. 잠시 후 다시 시도해 주세요.", status=429)
+        calls.append(now)
 
 
 # ---------------------------------------------------------------------------
@@ -636,7 +679,7 @@ def notify_webhook(clean: dict, level: dict, meta: dict, env=None) -> str:
 # ---------------------------------------------------------------------------
 # 11. 전체 흐름 (HTTP 와 분리해서 테스트하기 쉽게 만든 핵심 함수)
 # ---------------------------------------------------------------------------
-def run_diagnosis(data, env=None):
+def run_diagnosis(data, env=None, ip: str | None = None):
     """입력 dict 를 받아 (HTTP 상태 코드, 응답 dict) 를 돌려준다."""
     env = os.environ if env is None else env
     started = time.monotonic()
@@ -644,6 +687,7 @@ def run_diagnosis(data, env=None):
     level = compute_level(clean["scores"])
     provider, key, model = pick_provider(env)
     timeout = get_timeout(env)
+    check_rate_limit(ip, env)          # 입력·설정이 올바른 요청만 횟수에 넣는다
 
     text = call_ai(provider, key, model, SYSTEM_PROMPT, build_user_prompt(clean, level), timeout)
     result = normalize_result(extract_json(text))
@@ -686,7 +730,7 @@ def send_json(handler: BaseHTTPRequestHandler, status: int, payload: dict, extra
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
-            status, payload = run_diagnosis(read_json_body(self))
+            status, payload = run_diagnosis(read_json_body(self), ip=client_ip(self))
         except ApiError as exc:
             if not isinstance(exc, InputError):
                 log("request_failed", code=exc.code, status=exc.status)

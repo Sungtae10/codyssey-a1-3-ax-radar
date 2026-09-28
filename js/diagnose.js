@@ -221,7 +221,11 @@
 
     var payload = collectPayload();
     var errors = validatePayload(payload);
-    if (errors.length) { showFieldErrors(errors); return; }   // (1) 빈 입력: 서버를 부르지 않는다
+    if (errors.length) {                                      // (1) 빈 입력: 서버를 부르지 않는다
+      hideRequestError();
+      showFieldErrors(errors);
+      return;
+    }
 
     clearErrors();
     hideRequestError();
@@ -249,9 +253,14 @@
         throw { kind: 'http', status: response.status, data: data };
       }
       state.lastPayload = payload;
-      renderResult(data.result, data.meta || {}, payload);
+      try {
+        renderResult(data.result, data.meta || {}, payload);
+      } catch (renderError) {                                 // 응답은 왔지만 내용이 예상과 다를 때
+        throw { kind: 'render', detail: renderError };
+      }
     } catch (error) {
       if (timedOut) error = { kind: 'timeout' };
+      if (error && error.kind === 'render' && window.console) console.error(error.detail);
       showRequestError(describeFailure(error));
     } finally {
       clearTimeout(timers.timeout);
@@ -267,7 +276,7 @@
   var TITLES = {
     EMPTY_INPUT: '필수값을 입력하세요', INVALID_INPUT: '입력값을 확인해 주세요', TOO_LONG: '입력이 너무 길어요',
     BAD_JSON: '요청 형식 오류', BAD_REQUEST: '요청 형식 오류', TOO_LARGE: '입력이 너무 커요',
-    RATE_LIMITED: '요청이 많아요', CONFIG_MISSING_KEY: '서버 설정이 필요해요', CONFIG_INVALID: '서버 설정이 필요해요',
+    RATE_LIMITED: '요청이 많아요', TOO_MANY_REQUESTS: '요청이 너무 잦아요', CONFIG_MISSING_KEY: '서버 설정이 필요해요', CONFIG_INVALID: '서버 설정이 필요해요',
     AI_AUTH_ERROR: 'AI 서비스 인증 오류', AI_MODEL_NOT_FOUND: 'AI 모델 설정 오류', AI_BAD_REQUEST: 'AI 요청 거절',
     AI_UPSTREAM_ERROR: 'AI 서버 오류', AI_UNREACHABLE: 'AI 서버 연결 실패', AI_BLOCKED: 'AI가 답하지 않았어요',
     AI_BAD_OUTPUT: 'AI 응답 형식 오류', AI_TIMEOUT: '응답 시간 초과', SERVER_ERROR: '서버 오류',
@@ -275,6 +284,10 @@
   };
 
   function describeFailure(error) {
+    if (error && error.kind === 'render') {
+      els.result.hidden = true;
+      return { title: '결과를 표시하지 못했어요', message: '응답 형식이 예상과 달라요. 다시 시도해 주세요.', code: 'RENDER_ERROR' };
+    }
     if (error && error.kind === 'timeout') {
       return {
         title: '응답 시간 초과',

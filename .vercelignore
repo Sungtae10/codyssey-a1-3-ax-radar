@@ -1,4 +1,11 @@
-# 배포할 필요가 없는 폴더 (GitHub 에는 올라가고, Vercel 에는 올라가지 않음)
+# 배포할 필요가 없는 파일 (GitHub 에는 올라가고, Vercel 에는 올라가지 않음)
+# Vercel CLI 로 로컬 폴더를 바로 배포할 때도 .env 가 올라가지 않도록 반드시 제외한다.
+.env
+.env.*
 docs
 tests
 scripts
+__pycache__
+*.pyc
+.venv
+venv
