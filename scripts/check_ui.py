@@ -149,6 +149,17 @@ def run() -> int:
         page.wait_for_timeout(2800)
         check("응답 후: 3초 뒤 버튼 다시 활성", page.is_enabled("#submit-btn"))
 
+        # 긴 입력: 250자는 정상 처리, 600자를 넣으면 500자로 잘리거나 안내가 나와야 함
+        page.fill("#goal", "가" * 600)
+        long_length = len(page.input_value("#goal"))
+        check("긴 입력: 500자 제한", long_length == 500 or "500자 이내" in (page.click("#submit-btn") or page.inner_text("#error-goal")), f"입력 길이 {long_length}자")
+        page.fill("#goal", ("불량률을 줄이고 싶은데 설비 데이터가 흩어져 있어요. " * 9)[:250])
+        page.wait_for_timeout(3000)
+        page.click("#submit-btn")
+        page.wait_for_selector("#result", state="visible", timeout=10000)
+        check("긴 입력: 250자 정상 처리", page.is_visible("#result") and page.is_hidden("#request-error"))
+        page.wait_for_timeout(3200)
+
         context.grant_permissions(["clipboard-read", "clipboard-write"], origin=ok_url)
         page.click("#copy-btn")
         page.wait_for_timeout(300)
