@@ -78,14 +78,14 @@ git push -u origin main
 1. <https://vercel.com/new> → **Import Git Repository**
    - 처음이면 GitHub 연결 창에서 **Install** → "Only select repositories" 에 `codyssey-a1-3-ax-radar` 선택
 2. `codyssey-a1-3-ax-radar` 옆 **Import**
-3. Configure Project 화면
-   - Project Name: `codyssey-a1-3-ax-radar`
-   - Framework Preset: **Other**
+3. New Project (Configure Project) 화면
+   - Project Name: 제안된 이름 그대로 (뒤에 `-ofpt` 같은 글자가 붙어 있어도 됨)
+   - Application Preset (예전 이름 Framework Preset): 자동으로 **Python** 이 골라져 있으면 **Other** 로 변경
    - Root Directory: `./` (그대로)
-   - Build and Output Settings: 건드리지 않음
-   - **Environment Variables**: Key `GEMINI_API_KEY` / Value 에 키 붙여넣기 → **Add**
-4. **Deploy** 클릭 → 1~2분 뒤 완료 화면 → **Continue to Dashboard**
-5. 대시보드의 **Domains** 에 적힌 주소가 배포 URL 입니다. (보통 `https://codyssey-a1-3-ax-radar.vercel.app`, 이미 쓰는 이름이면 뒤에 글자가 붙습니다)
+   - Build and Output Settings: 건드리지 않음 (Other 로 바꾸면 알아서 바뀜)
+   - **Environment Variables**: `.env.example` 을 읽어 3개가 미리 나오면 `GEMINI_API_KEY` Value 에만 키를 붙여넣고, 쓰지 않는 `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` 줄은 빼기(-) 버튼으로 삭제. 오른쪽 자물쇠 스위치는 켠 상태 유지
+4. **Deploy** 클릭 → 1~2분 뒤 **Congratulations!** 화면 → **Continue to Project**
+5. 대시보드의 **Domains** 에 적힌 주소가 배포 URL 입니다. (이 저장소는 `https://codyssey-a1-3-ax-radar-ofpt.vercel.app`, 2026-09-29 배포)
 
 ---
 

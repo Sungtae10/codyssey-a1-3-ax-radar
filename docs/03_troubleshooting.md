@@ -82,12 +82,23 @@ AI 코딩 도구가 만든 코드라도 **왜 틀렸는지 말로 설명하고 �
 | "AI 모델 설정 오류" `AI_MODEL_NOT_FOUND` | `GEMINI_MODEL` 오타 또는 종료된 모델 | Logs 에서 `status=404` | `GEMINI_MODEL` 을 지우거나 공식 모델 목록의 이름으로 수정 |
 | "요청이 많아요" `RATE_LIMITED · HTTP 429` | 무료 등급 한도 초과 (하루 한도는 태평양 시간 자정에 초기화) | AI Studio > Rate limit 화면 | 잠시 뒤 재시도, 동료 테스트 시간 분산 |
 | "요청이 너무 잦아요" `TOO_MANY_REQUESTS · HTTP 429` | 같은 IP 에서 1분에 6번 넘게 요청 (우리 서버의 제한) | 오류 코드로 구분 | 1분 뒤 재시도, 시연·동료 평가가 겹치면 `RATE_LIMIT_PER_MINUTE` 를 잠시 올리고 Redeploy |
-| "API를 찾을 수 없어요" `HTTP 404` | `api/` 폴더가 배포에 없음, Root Directory 설정 오류 | 배포 상세 화면의 함수 목록(Resources 또는 Functions)에 `api/diagnose.py` 가 있는지 | Framework Preset **Other**, Root Directory **./** 로 다시 배포 |
+| "API를 찾을 수 없어요" `HTTP 404` | `api/` 폴더가 배포에 없음, Root Directory 설정 오류, Application Preset 이 Python 으로 배포됨 | 배포 상세 화면의 함수 목록(Resources 또는 Functions)에 `api/diagnose.py` 가 있는지 | Application Preset(예전 이름 Framework Preset) **Other**, Root Directory **./** 로 다시 배포 |
 | "서버 오류" `HTTP 500` (JSON 아님) | 함수가 시작하다 실패 (예: `requirements.txt` 누락으로 `ModuleNotFoundError: requests`) | Logs 의 Traceback | 루트에 `requirements.txt` 가 있는지 확인 후 push |
 | "응답 시간 초과" `HTTP 504` | AI 응답이 함수 제한 시간 초과 | Logs 의 `ai_timeout` | `vercel.json` maxDuration(60) 확인, 더 빠른 모델 사용 |
 | 화면은 뜨는데 디자인이 깨짐 | 파일 이름 대소문자 불일치 (Vercel 은 대소문자를 구분) | 개발자 도구 Network 탭에서 css 404 | 링크와 실제 파일 이름을 똑같이 |
 | 로컬은 되는데 배포에서 키 오류 | `.env` 는 로컬에만 있고 GitHub·Vercel 에 올라가지 않음 (의도된 동작) | `/api/health` | Vercel 환경 변수에 따로 입력 |
 | `git push` 거절 (fetch first) | GitHub 저장소를 README 포함으로 만들어 이력이 다름 | 오류 문구 | 빈 저장소로 다시 만들거나 `git pull --rebase origin main` 후 push |
+
+### B-2. 실제 배포에서 겪은 일 (2026-09-29)
+
+| 순서 | 겪은 일 | 원인 | 한 일 |
+|---|---|---|---|
+| 1 | AI 작업 환경에서 `git push` 가 403 으로 거절 | GitHub 계정 연결과 별개로, 저장소에 쓰기 권한을 주는 Claude GitHub App 이 이 저장소에 설치되지 않았음 | GitHub 에서 앱 설치 화면 → Only select repositories 에 이 저장소 추가 → 다시 push (먼저 `git push --dry-run` 으로 권한만 확인) |
+| 2 | 올리기 전 커밋 작성자 이메일이 개인 이메일로 되어 있음을 발견 | 작업 환경의 Git 설정이 A1-2 저장소(GitHub 비공개 주소)와 달랐음 | 김성태 결정으로, 한 번도 올리지 않은 커밋 18개의 작성자를 `김성태 <…@users.noreply.github.com>` 로 통일한 뒤 첫 push (코드·메시지·날짜는 그대로, 트리 동일 확인) |
+| 3 | Vercel Import 화면에서 Application Preset 이 **Python** 으로 자동 선택됨 | 루트의 `requirements.txt` 를 보고 "Python 앱"으로 추정 (D7 과 같은 이유) | **Other** 로 바꿔 배포. `api/` 파일 방식 함수와 정적 화면이 함께 배포됨 |
+| 4 | Environment Variables 에 키 3개가 빈 값으로 미리 나옴 | Vercel 이 `.env.example` 을 읽어 이름을 채워 줌 | `GEMINI_API_KEY` 에만 값 입력, 쓰지 않는 2개는 빼기(-) 버튼으로 삭제 |
+| 5 | 프로젝트 이름 뒤에 `-ofpt` 가 자동으로 붙음 | Vercel 이 겹치지 않는 이름을 제안 | 배포 주소가 `codyssey-a1-3-ax-radar-ofpt.vercel.app` 이 됨 (`codyssey-a1-3-ax-radar.vercel.app` 은 404). README 의 주소를 실제 주소로 수정 |
+| 6 | 첫 로그인 때 2단계 인증(2FA) 설정 화면이 나옴 | Vercel 의 계정 보안 권장 (선택 사항) | 배포에는 영향 없음. API 키가 저장된 계정이므로 2단계 인증 설정을 권장 |
 
 ### 키가 노출됐을 때 (즉시, 이 순서대로)
 

@@ -106,19 +106,19 @@ python scripts/check_ui.py
 
 ---
 
-## 7. 배포 환경 점검표 (배포 후 김성태 작성)
+## 7. 배포 환경 점검표 (배포 후 작성)
 
-배포 URL: `https://______________________.vercel.app`  (점검일: 2026-__-__)
+배포 URL: `https://codyssey-a1-3-ax-radar-ofpt.vercel.app`  (점검일: 2026-09-29)
 
 | 번호 | 항목 | 방법 | 결과 (O/X, 메모) |
 |---|---|---|---|
-| P1 | 함수 실행·키·모델 설정 | `/api/health` 열기 → `"config_ok": true` | |
+| P1 | 함수 실행·키·모델 설정 | `/api/health` 열기 → `"config_ok": true` | O · `provider: gemini`, `model: gemini-3.5-flash-lite`, `key_configured: true`, `config_ok: true`, `runtime: python 3.12.14` (2026-09-29 03:53 KST) |
 | P2 | 메뉴 이동 | 상단 메뉴 5개 차례로 누르기 | |
 | P3 | 반응형 | 휴대폰으로 접속 + PC 브라우저 개발자 도구 390px | |
 | P4 | 빈 입력 | 아무것도 입력하지 않고 제출 | |
 | P5 | 실제 AI 결과 | "예시로 채우기" 후 제출 → 결과 하단에 `분석 엔진: gemini` 표시 | |
 | P6 | 응답 시간 | P5 를 3번 반복, 결과 하단 초 기록 → 평균 20초 이하인가 | 1회 __초 / 2회 __초 / 3회 __초 |
 | P7 | 결과 복사·인쇄 | 결과 복사 후 메모장에 붙여넣기 | |
-| P8 | 405 확인 | 브라우저 주소창에 `/api/diagnose` 입력 → METHOD_NOT_ALLOWED JSON | |
+| P8 | 405 확인 | 브라우저 주소창에 `/api/diagnose` 입력 → METHOD_NOT_ALLOWED JSON | O · GET 요청에 HTTP 405 응답 확인 |
 | P9 | 동료 재현 | 동료 1명이 자기 기기로 접속해 P5 수행 | |
 | P10 | 재배포 흐름 | README 에 배포 URL 기입 → push → Vercel 자동 재배포 확인 | |

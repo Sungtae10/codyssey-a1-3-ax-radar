@@ -2,7 +2,8 @@
 
 **제조기업의 AI 전환(AX) 준비도를 5개 영역으로 자가진단하고, AI가 12개월 로드맵과 KPI를 제안하는 웹 서비스**
 
-- 배포 URL: <https://codyssey-a1-3-ax-radar.vercel.app> (배포 후 Vercel 대시보드의 실제 주소로 확인)
+- 배포 URL: <https://codyssey-a1-3-ax-radar-ofpt.vercel.app>
+- 상태 확인: <https://codyssey-a1-3-ax-radar-ofpt.vercel.app/api/health> (`"config_ok": true` 이면 AI 호출 준비 완료)
 - 저장소: <https://github.com/Sungtae10/codyssey-a1-3-ax-radar>
 - 만든 사람: 김성태 · Codyssey AI 네이티브 과정 A1-3 미션 (AI 웹 서비스 빌딩)
 
