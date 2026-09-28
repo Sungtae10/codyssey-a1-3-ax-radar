@@ -1,0 +1,20 @@
+# 비밀 키 파일: 절대 커밋 금지 (.env.example 만 예외)
+.env
+.env.*
+!.env.example
+
+# Python 실행 부산물
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Vercel CLI 가 만드는 로컬 연결 정보
+.vercel/
+
+# 운영체제·편집기 파일
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

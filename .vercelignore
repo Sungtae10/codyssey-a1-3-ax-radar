@@ -1,0 +1,4 @@
+# 배포할 필요가 없는 폴더 (GitHub 에는 올라가고, Vercel 에는 올라가지 않음)
+docs
+tests
+scripts
