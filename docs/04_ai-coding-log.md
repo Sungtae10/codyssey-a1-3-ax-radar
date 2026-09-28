@@ -83,5 +83,5 @@
 아래 이름으로 저장해 `docs/screenshots/` 에 넣습니다. (키·개인정보가 보이지 않는지 확인)
 
 - `30_ai_chat_request.png`: 미션을 요청한 첫 화면
-- `31_ai_chat_debugging.png`: 오류(D2 또는 D3)를 찾고 고친 부분
+- `31_ai_chat_debugging.png`: 오류나 문제를 찾고 고친 부분 (예: D2·D3 수정, 배포 설정을 Python 에서 Other 로 바꾼 안내)
 - `32_ai_chat_result.png`: 최종 전달 화면
