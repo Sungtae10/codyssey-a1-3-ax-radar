@@ -75,13 +75,15 @@
 
 ### 배포 환경 스크린샷 (실제 AI 동작)
 
-배포 후 `docs/screenshots/20~24_deployed_*.png` 를 추가하고, 아래 주석 블록의 시작 줄과 끝 줄을 지우면 표시됩니다.
+배포 URL 에서 직접 찍은 화면입니다. (2026-09-29, 결과 하단 `분석 엔진: gemini · gemini-3.5-flash-lite · 15.4초`, 브라우저 북마크 줄은 개인 정보라 모자이크)
 
-<!-- 배포 스크린샷 시작
-| 배포 데스크톱 | 배포 모바일 | 실제 AI 결과 |
+| 배포 데스크톱 (주소창 포함) | 배포 모바일 (다크 모드) |
+|---|---|
+| ![배포 데스크톱](docs/screenshots/20_deployed_desktop.png) | ![배포 모바일](docs/screenshots/21_deployed_mobile.png) |
+
+| AI 진단 입력 (예시로 채우기) | 실제 AI 결과 (Gemini) | 빈 입력 안내 |
 |---|---|---|
-| ![배포 데스크톱](docs/screenshots/20_deployed_desktop.png) | ![배포 모바일](docs/screenshots/21_deployed_mobile.png) | ![실제 AI 결과](docs/screenshots/22_deployed_ai_result.png) |
-배포 스크린샷 끝 -->
+| ![AI 진단 입력](docs/screenshots/22_deployed_ai_input.png) | ![실제 AI 결과](docs/screenshots/23_deployed_ai_result.png) | ![빈 입력 안내](docs/screenshots/24_deployed_error.png) |
 
 ---
 

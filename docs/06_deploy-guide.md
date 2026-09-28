@@ -109,16 +109,17 @@ git push -u origin main
 
 ## 6. 제출용 스크린샷 찍기 (10분)
 
-`docs/screenshots/` 에 아래 이름으로 저장합니다. (저장소의 01~14번은 로컬 목업 화면이고, 아래는 **배포 사이트의 실제 AI 화면**입니다)
+`docs/screenshots/` 에 아래 이름으로 저장합니다. (저장소의 01~14번은 로컬 목업 화면이고, 아래는 **배포 사이트의 실제 AI 화면**입니다. 2026-09-29 촬영본이 들어 있음)
 
 | 파일 이름 | 내용 | 찍는 방법 |
 |---|---|---|
-| `20_deployed_desktop.png` | 배포 사이트 첫 화면 (주소창 포함) | Win + Shift + S |
+| `20_deployed_desktop.png` | 배포 사이트 첫 화면 (주소창 포함, 북마크 줄은 모자이크) | Win + Shift + S |
 | `21_deployed_mobile.png` | 휴대폰 화면 | 휴대폰 캡처, 또는 크롬 F12 → Ctrl + Shift + M → iPhone 선택 |
-| `22_deployed_ai_result.png` | 실제 AI 결과 (하단 `분석 엔진: gemini` 보이게) | 결과 화면 캡처 |
-| `23_deployed_health.png` | `/api/health` 응답 | 브라우저 캡처 |
+| `22_deployed_ai_input.png` | AI 진단 입력 (예시로 채우기) | 입력 화면 캡처 |
+| `23_deployed_ai_result.png` | 실제 AI 결과 (하단 `분석 엔진: gemini` 보이게) | 결과 화면 캡처 |
 | `24_deployed_error.png` | 빈 입력 안내 | 빈 상태로 제출 후 캡처 |
 
+- `/api/health` 응답은 캡처 대신 `docs/02_test-report.md` 7장 P1 에 값을 그대로 기록했습니다.
 - API 키가 보이는 화면(Vercel 환경 변수 값, `.env`)은 찍지 않습니다.
 - AI 코딩 도구 증빙 캡처(`30~32번`)는 `docs/04_ai-coding-log.md` 5장을 참고합니다.
 
@@ -127,7 +128,7 @@ git push -u origin main
 ## 7. README 에 배포 URL 적고 다시 올리기 (5분) = "수정 후 재배포" 증빙
 
 1. `README.md` 맨 위의 배포 URL 줄을 실제 주소로 고칩니다. (다르면)
-2. `README.md` 의 "배포 환경 스크린샷" 표에 있는 이미지 줄 앞의 주석 표시를 지웁니다.
+2. `README.md` 의 "배포 환경 스크린샷" 표가 위 파일 이름을 가리키는지 확인합니다.
 3. 올립니다:
 
 ```powershell
@@ -142,11 +143,11 @@ git push
 
 ## 8. 코디세이 제출 체크리스트 (필수 5종)
 
-- [ ] 배포된 웹 서비스: Vercel URL (동료가 접속해 AI 기능을 실행할 수 있어야 함)
-- [ ] GitHub 저장소: `https://github.com/Sungtae10/codyssey-a1-3-ax-radar`
-- [ ] README.md: 소개, 기술 스택, 실행/배포 방법, **배포 URL**, 환경 변수 설정
-- [ ] 서비스 기획서: `docs/01_service-plan.md`
-- [ ] 증빙: 데스크톱·모바일·AI 동작 스크린샷(20~24번) + AI 코딩 도구 사용 기록(`docs/04_ai-coding-log.md` + 대화 캡처)
+- [x] 배포된 웹 서비스: <https://codyssey-a1-3-ax-radar-ofpt.vercel.app> (동료가 접속해 AI 기능을 실행할 수 있어야 함)
+- [x] GitHub 저장소: `https://github.com/Sungtae10/codyssey-a1-3-ax-radar`
+- [x] README.md: 소개, 기술 스택, 실행/배포 방법, **배포 URL**, 환경 변수 설정
+- [x] 서비스 기획서: `docs/01_service-plan.md`
+- [ ] 증빙: 데스크톱·모바일·AI 동작 스크린샷(20~24번, 완료) + AI 코딩 도구 사용 기록(`docs/04_ai-coding-log.md` 완료 + 대화 캡처 30~32번은 김성태 추가)
 
 ---
 

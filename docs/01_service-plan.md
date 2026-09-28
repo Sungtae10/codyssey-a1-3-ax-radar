@@ -277,12 +277,12 @@ codyssey-a1-3-ax-radar/
 | 단계 | 산출물 | 상태 |
 |---|---|---|
 | 기획 | 이 기획서 (`docs/01_service-plan.md`) | 완료 |
-| 구조 구성 | 폴더 구조, GitHub 커밋 이력 | 완료 (로컬 커밋 이력, GitHub push 는 배포 가이드 3단계) |
+| 구조 구성 | 폴더 구조, GitHub 커밋 이력 | 완료 (GitHub 공개 저장소 `Sungtae10/codyssey-a1-3-ax-radar`) |
 | 백엔드 | `api/diagnose.py`, `api/health.py`, `requirements.txt` | 완료 |
 | 프론트엔드 | `index.html`, `css/`, `js/` | 완료 |
 | 로컬 검증 | 단위 테스트 59개, 화면 점검 46개, 스크린샷 14장, 독립 검토 | 완료 (`docs/02_test-report.md`) |
-| 배포 | Vercel URL, 배포 환경 동작 확인 | 배포 가이드(`docs/06_deploy-guide.md`) 4~5단계 진행 후 기록 |
-| 문서화 | README, 테스트 리포트, 트러블슈팅, AI 코딩 로그, 학습 노트 | 완료 (배포 URL·배포 스크린샷은 배포 후 추가) |
+| 배포 | Vercel URL, 배포 환경 동작 확인 | 완료 (<https://codyssey-a1-3-ax-radar-ofpt.vercel.app>, 실제 Gemini 응답 15.4초, 점검표 `docs/02_test-report.md` 7장) |
+| 문서화 | README, 테스트 리포트, 트러블슈팅, AI 코딩 로그, 학습 노트 | 완료 (배포 URL, 배포 환경 스크린샷 20~24 포함) |
 
 ---
 
