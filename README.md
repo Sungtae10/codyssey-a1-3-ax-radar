@@ -30,6 +30,7 @@
 10. [테스트](#10-테스트)
 11. [보너스 구현](#11-보너스-구현)
 12. [제출 패키지와 문서](#12-제출-패키지와-문서)
+13. [개선과 확장 계획](#13-개선과-확장-계획)
 
 ---
 
@@ -277,6 +278,7 @@ python3 scripts/dev_server.py
 - 사용자가 적은 고민 문장은 프롬프트 안에서 "지시가 아닌 자료"로 구분해 프롬프트 주입을 줄입니다. (따옴표를 여러 개 넣어 구분 기호를 흉내 내는 우회도 차단)
 - 응답 헤더: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` (`vercel.json`)
 - **키 유출이 의심되면**: ① 발급처에서 즉시 폐기 ② 새 키로 Vercel 환경 변수 교체 후 Redeploy ③ 커밋 이력에 들어갔다면 `git filter-repo --replace-text` 로 정리 후 강제 push (절차: [docs/03_troubleshooting.md](docs/03_troubleshooting.md))
+- **긴급 연락·권한 회수**: 발견 즉시 저장소 소유자(김성태, GitHub `@Sungtae10`)에게 알리고 공개 채널에는 키 값을 적지 않습니다. 같은 날 GitHub 협업자·연결 앱·토큰, Vercel 멤버·토큰, AI 코딩 도구 커넥터 권한을 점검해 필요 없는 권한을 회수합니다. (보고 방법: [SECURITY.md](SECURITY.md))
 
 ---
 
@@ -323,5 +325,20 @@ python scripts/check_ui.py                 # 브라우저 화면 점검 46개 (p
 | [docs/03_troubleshooting.md](docs/03_troubleshooting.md) | 실제로 겪은 오류의 원인·수정, 배포 후 오류 해결표 |
 | [docs/05_learning-notes.md](docs/05_learning-notes.md) | 미션 목표 6가지 설명, 예상 질문, 시연 순서 |
 | [docs/06_deploy-guide.md](docs/06_deploy-guide.md) | GitHub push부터 Vercel 배포·확인·제출까지 |
+| [docs/08_improvement-plan.md](docs/08_improvement-plan.md) | 응답 지연·비용 개선, 백엔드 확장, 프레임워크 전환 검토 |
+| [SECURITY.md](SECURITY.md) | 보안 문제 보고 방법과 사고 대응 순서 |
 
 > 이 프로젝트는 AI 코딩 도구(Claude)로 코드와 문서 초안을 만들고, 테스트로 결함을 찾아 고친 뒤 김성태가 검토·배포했습니다. 과정은 커밋 이력과 [AI 코딩 도구 사용 기록](docs/04_ai-coding-log.md)에 남겼습니다.
+
+---
+
+## 13. 개선과 확장 계획
+
+자세한 설계와 근거: [docs/08_improvement-plan.md](docs/08_improvement-plan.md)
+
+| 주제 | 지금 적용한 것 | 다음 단계 |
+|---|---|---|
+| 응답 지연·비용 | 경량 모델(`gemini-3.5-flash-lite`), 입력 500자·출력 구조(로드맵 3단계, KPI 3개) 제한, 단계는 코드가 계산, 시간 제한(AI 40초·브라우저 50초·함수 60초), 10초 지연 안내, 호출 빈도 제한 | ① 같은 입력 **응답 캐싱** (입력 해시를 키로 24시간 보관) ② 출력 토큰 상한 ③ 스트리밍으로 요약부터 표시 ④ 긴 작업은 **작업 큐로 비동기 처리** ⑤ 대량 진단은 배치 API |
+| 백엔드 확장 | 저장소 없음, 호출 제한은 인스턴스별 메모리 | **KV 저장소**(Redis 계열: 캐시, 전역 호출 제한, 결과 공유 링크), **작업 큐**(비동기 진단, PDF 생성), **Postgres**(동의 기반 진단 이력), **파일 저장소**(PDF 보고서). API 응답 형식은 유지 |
+| 프레임워크 | 미션 조건에 따라 바닐라 JS | React + Vite 로 옮긴다면 화면 코드 약 1,270줄만 컴포넌트로 전환하고, `api/` Python 함수와 API 테스트 59개는 그대로. 장점(컴포넌트 재사용, 상태 관리, 자동 이스케이프)과 단점(빌드 단계, 번들 크기, 학습 비용)은 문서 3장 |
+| 효과 측정 | 서버 로그 `elapsed_ms`, 결과 하단 소요 시간 (실측 15.4초) | 응답 시간 p95 20초 이하, 캐시 적중률, 진단 1건당 AI 호출 수, 실패율 |

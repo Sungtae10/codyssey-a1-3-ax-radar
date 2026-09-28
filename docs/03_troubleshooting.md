@@ -102,6 +102,7 @@ AI 코딩 도구가 만든 코드라도 **왜 틀렸는지 말로 설명하고 �
 
 ### 키가 노출됐을 때 (즉시, 이 순서대로)
 
+0. **연락 (발견 즉시)**: 발견한 사람은 저장소 소유자(김성태, GitHub `@Sungtae10`)에게 바로 알린다. 공개 이슈·단체 채팅방에는 키 값이나 재현 방법을 적지 않는다. (보고 방법: 저장소 루트 [SECURITY.md](../SECURITY.md)) 팀으로 운영할 때는 "발견자 → 운영 담당 → 팀장" 순서로 연락하고, 30분 안에 답이 없으면 다음 사람에게 넘긴다.
 1. **폐기**: Google AI Studio > API keys 에서 노출된 키 삭제 (가장 먼저)
 2. **재발급**: 새 키를 만들어 Vercel 환경 변수에 교체 → Redeploy
 3. **이력 정리**: 커밋에 들어갔다면 이력에서도 지운다
@@ -115,6 +116,17 @@ git push --force origin main
 ```
 
 > 이력을 지워도 이미 복사된 곳이 있을 수 있으므로 **1번 폐기가 핵심**입니다. `replacements.txt` 는 작업 후 삭제합니다.
+
+4. **권한 회수 (같은 날)**: 키 말고도 이 서비스에 접근할 수 있는 권한을 점검해 필요 없는 것은 회수한다.
+
+| 대상 | 확인할 곳 | 할 일 |
+|---|---|---|
+| GitHub | 저장소 Settings > Collaborators, 계정 Settings > Applications, Settings > Developer settings > Personal access tokens | 필요 없는 협업자 제거, 연결된 앱(Vercel, AI 코딩 도구)의 저장소 접근 범위 축소·해제, 쓰지 않는 토큰 폐기 |
+| Vercel | 팀 Settings > Members, Account Settings > Tokens | 필요 없는 멤버·토큰 삭제, 2단계 인증 켜기 |
+| AI 코딩 도구 | claude.ai 설정의 커넥터(GitHub, Vercel) | 연결을 끊거나 이 저장소만 허용 |
+| AI 공급사 콘솔 | Google AI Studio 사용량·요금 화면 (Anthropic, OpenAI 도 동일) | 무단 사용 흔적과 결제 한도 확인 |
+
+5. **사후 기록**: 언제·무엇이·어디에 노출됐는지, 조치한 시각, 재발 방지책을 이 문서 A 장 형식으로 남긴다.
 
 ---
 
