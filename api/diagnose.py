@@ -693,7 +693,9 @@ class handler(BaseHTTPRequestHandler):
             status, payload = exc.status, exc.to_payload()
         except Exception as exc:  # 예상하지 못한 오류도 JSON 으로 안내한다
             log("server_error", error=type(exc).__name__)
-            traceback.print_exc()
+            # 오류 메시지에 키가 섞여 들어와도 로그에는 남지 않도록 가린 뒤 출력한다.
+            secrets = [os.environ.get(name, "") for name in KEY_ENV.values()]
+            print(redact(traceback.format_exc(), *secrets), flush=True)
             status = 500
             payload = {"ok": False, "error": {"code": "SERVER_ERROR", "message": "서버에서 예상하지 못한 오류가 났어요. 잠시 후 다시 시도해 주세요."}}
         send_json(self, status, payload)
