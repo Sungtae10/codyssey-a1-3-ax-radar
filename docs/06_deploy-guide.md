@@ -147,7 +147,7 @@ git push
 - [x] GitHub 저장소: `https://github.com/Sungtae10/codyssey-a1-3-ax-radar`
 - [x] README.md: 소개, 기술 스택, 실행/배포 방법, **배포 URL**, 환경 변수 설정
 - [x] 서비스 기획서: `docs/01_service-plan.md`
-- [ ] 증빙: 데스크톱·모바일·AI 동작 스크린샷(20~24번, 완료) + AI 코딩 도구 사용 기록(`docs/04_ai-coding-log.md` 완료, 배포 과정 화면 25·26번 완료, 대화 캡처 30·31번은 김성태 추가)
+- [x] 증빙: 데스크톱·모바일·AI 동작 스크린샷(20~24번) + AI 코딩 도구 사용 기록(`docs/04_ai-coding-log.md`, 배포 과정 화면 25·26번, 대화 캡처 30·31번)
 
 ---
 

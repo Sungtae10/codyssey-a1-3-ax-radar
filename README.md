@@ -315,7 +315,7 @@ python scripts/check_ui.py                 # 브라우저 화면 점검 46개 (p
 | GitHub 저장소 | 이 저장소 (프론트 `index.html`·`css/`·`js/` 와 백엔드 `api/` 분리) |
 | README | 이 문서 |
 | 서비스 기획서 | [docs/01_service-plan.md](docs/01_service-plan.md) |
-| 증빙 자료 | 스크린샷 [docs/screenshots/](docs/screenshots/), AI 코딩 도구 사용 기록 [docs/04_ai-coding-log.md](docs/04_ai-coding-log.md) |
+| 증빙 자료 | 스크린샷 [docs/screenshots/](docs/screenshots/) (배포 환경 20~24, 배포 과정 25·26, AI 대화 30·31), AI 코딩 도구 사용 기록 [docs/04_ai-coding-log.md](docs/04_ai-coding-log.md) |
 
 | 참고 문서 | 내용 |
 |---|---|
