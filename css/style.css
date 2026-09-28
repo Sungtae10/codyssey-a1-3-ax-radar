@@ -98,6 +98,9 @@
 *::before,
 *::after { box-sizing: border-box; }
 
+/* hidden 속성이 붙은 요소는 display 를 지정한 클래스가 있어도 반드시 숨긴다 */
+[hidden] { display: none !important; }
+
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
