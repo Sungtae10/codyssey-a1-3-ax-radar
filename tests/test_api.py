@@ -489,6 +489,44 @@ class HttpHandlerTests(unittest.TestCase):
         self.assertFalse(payload["key_configured"])
 
 
+class FrontendContractTests(unittest.TestCase):
+    """프론트엔드(HTML/JS)와 백엔드(Python)가 같은 값·이름을 쓰는지 확인 (한쪽만 고치는 실수 방지)."""
+
+    HTML = (ROOT / "index.html").read_text(encoding="utf-8")
+    JS = (ROOT / "js" / "diagnose.js").read_text(encoding="utf-8")
+
+    def options_of(self, select_id):
+        block = re.search(rf'<select id="{select_id}".*?</select>', self.HTML, re.S).group(0)
+        return [value for value in re.findall(r'<option value="([^"]*)"', block) if value]
+
+    def test_select_options_match_api(self):
+        self.assertEqual(self.options_of("industry"), list(diagnose.INDUSTRIES))
+        self.assertEqual(self.options_of("size"), list(diagnose.SIZES))
+
+    def test_score_radios_match_dimensions(self):
+        for key in diagnose.DIMENSIONS:
+            values = re.findall(rf'name="score-{key}" value="(\d)"', self.HTML)
+            self.assertEqual(values, ["1", "2", "3", "4", "5"], key)
+        js_keys = re.findall(r"\{ key: '(\w+)', label:", self.JS)
+        self.assertEqual(js_keys, list(diagnose.DIMENSIONS))
+
+    def test_length_limits_match_api(self):
+        self.assertIn(f'id="goal" name="goal" rows="5" maxlength="{diagnose.GOAL_MAX}"', self.HTML)
+        self.assertIn(f'maxlength="{diagnose.COMPANY_MAX}"', self.HTML)
+        self.assertIn(f"var GOAL_MIN = {diagnose.GOAL_MIN};", self.JS)
+        self.assertIn(f"var GOAL_MAX = {diagnose.GOAL_MAX};", self.JS)
+
+    def test_navigation_targets_exist(self):
+        targets = re.findall(r'<a href="#([\w-]+)" data-nav>', self.HTML)
+        self.assertGreaterEqual(len(targets), 3)
+        for target in targets:
+            self.assertIn(f'<section id="{target}"', self.HTML)
+
+    def test_frontend_calls_relative_api_path(self):
+        self.assertIn("var API_URL = '/api/diagnose';", self.JS)
+        self.assertTrue((ROOT / "api" / "diagnose.py").exists())
+
+
 class ConsistencyAndSecurityTests(unittest.TestCase):
     def test_health_and_diagnose_share_settings(self):
         for name in ("KEY_ENV", "MODEL_ENV", "DEFAULT_MODELS", "PROVIDER_ORDER", "PROVIDER_ALIASES"):
